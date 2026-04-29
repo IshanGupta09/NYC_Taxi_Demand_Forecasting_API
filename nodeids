@@ -1,0 +1,23 @@
+[
+  "tests/test_all.py::TestAPIEndpoints::test_batch_predict_limit",
+  "tests/test_all.py::TestAPIEndpoints::test_health_endpoint",
+  "tests/test_all.py::TestAPIEndpoints::test_next_hours_limit",
+  "tests/test_all.py::TestAPIEndpoints::test_predict_invalid_datetime_returns_422",
+  "tests/test_all.py::TestAPIEndpoints::test_predict_invalid_zone_returns_422",
+  "tests/test_all.py::TestAPIEndpoints::test_predict_without_model_returns_503",
+  "tests/test_all.py::TestAPIEndpoints::test_root_returns_ok",
+  "tests/test_all.py::TestAggregation::test_demand_is_non_negative",
+  "tests/test_all.py::TestAggregation::test_feature_cols_complete",
+  "tests/test_all.py::TestAggregation::test_output_is_hourly",
+  "tests/test_all.py::TestDemandPredictorLogic::test_demand_non_negative",
+  "tests/test_all.py::TestDemandPredictorLogic::test_feature_row_shape",
+  "tests/test_all.py::TestLagFeatures::test_lag_1h_is_previous_hour",
+  "tests/test_all.py::TestLagFeatures::test_lag_columns_created",
+  "tests/test_all.py::TestLagFeatures::test_no_leakage_across_zones",
+  "tests/test_all.py::TestTimeFeatures::test_columns_added",
+  "tests/test_all.py::TestTimeFeatures::test_cyclical_bounds",
+  "tests/test_all.py::TestTimeFeatures::test_hour_range",
+  "tests/test_all.py::TestTimeFeatures::test_is_weekend_binary",
+  "tests/test_all.py::TestTimeFeatures::test_new_years_day_is_holiday",
+  "tests/test_all.py::TestTimeFeatures::test_rush_hour_detection"
+]

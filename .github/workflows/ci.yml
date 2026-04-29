@@ -1,0 +1,120 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+env:
+  IMAGE_NAME: demand-forecasting-api
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  # ────────────────────────────────────────────────────
+  # Job 1: Lint & Test
+  # ────────────────────────────────────────────────────
+  test:
+    name: 🧪 Lint & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Lint with ruff
+        run: |
+          pip install ruff
+          ruff check src/ api/ tracking/ tests/ --ignore E501
+
+      - name: Run tests with coverage
+        run: |
+          pytest tests/ -v \
+            --cov=src \
+            --cov=api \
+            --cov-report=term-missing \
+            --cov-report=xml
+
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+
+  # ────────────────────────────────────────────────────
+  # Job 2: Build Docker image
+  # ────────────────────────────────────────────────────
+  docker-build:
+    name: 🐳 Build Docker Image
+    runs-on: ubuntu-latest
+    needs: test                   # only build if tests pass
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create dummy model files for build test
+        run: |
+          mkdir -p models
+          python -c "
+          import pickle, json, numpy as np
+          import xgboost as xgb
+          # Tiny placeholder model so Docker build succeeds in CI
+          m = xgb.XGBRegressor(n_estimators=1)
+          m.fit([[0]*28], [1])
+          with open('models/xgb_demand_model.pkl', 'wb') as f: pickle.dump(m, f)
+          meta = {'top_zone_ids': [161], 'months': ['2026-01'],
+                  'feature_cols': ['zone_id','hour','day_of_week','day_of_month',
+                                   'month','week_of_year','is_weekend','is_holiday',
+                                   'is_rush_hour','hour_sin','hour_cos','dow_sin',
+                                   'dow_cos','month_sin','month_cos','lag_1h','lag_2h',
+                                   'lag_3h','lag_24h','lag_48h','lag_168h',
+                                   'roll_mean_3h','roll_mean_6h','roll_mean_24h',
+                                   'roll_std_24h','roll_max_24h','avg_fare','avg_distance'],
+                  'test_mae': 0.0, 'test_rmse': 0.0, 'test_r2': 1.0}
+          json.dump(meta, open('models/model_meta.json','w'))
+          "
+        env:
+          PIP_QUIET: 1
+
+      - name: Build Docker image
+        run: |
+          pip install xgboost --quiet
+          docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
+          docker build -t ${{ env.IMAGE_NAME }}:latest .
+
+      - name: Smoke test — container starts and /health returns 200
+        run: |
+          docker run -d --name api_test \
+            -p 8000:8000 \
+            ${{ env.IMAGE_NAME }}:latest
+          sleep 8
+          curl --fail http://localhost:8000/health
+          docker stop api_test
+
+  # ────────────────────────────────────────────────────
+  # Job 3: Deploy to Render (on push to main only)
+  # ────────────────────────────────────────────────────
+  deploy:
+    name: 🚀 Deploy to Render
+    runs-on: ubuntu-latest
+    needs: docker-build
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Trigger Render deploy hook
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+        # Set RENDER_DEPLOY_HOOK_URL in GitHub repo Settings → Secrets
+        # Get the hook URL from Render dashboard → Settings → Deploy Hook

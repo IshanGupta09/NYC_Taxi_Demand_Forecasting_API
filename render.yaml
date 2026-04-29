@@ -1,0 +1,19 @@
+# render.yaml — Render.com deployment config
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Deploy steps:
+#   1. Push this repo to GitHub
+#   2. Go to render.com → New → Blueprint → connect your repo
+#   3. Render auto-reads this file and creates the service
+
+services:
+  - type: web
+    name: demand-forecasting-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free                   # upgrade to starter ($7/mo) for always-on
+    envVars:
+      - key: MLFLOW_TRACKING_URI
+        value: mlruns
+    healthCheckPath: /health
+    autoDeploy: true             # re-deploy on every push to main
