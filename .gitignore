@@ -2,11 +2,11 @@
 data/raw/
 *.parquet
 
-# ── OPTION A: uncomment these to ignore model + cache ─────────────
+# ── streamlit: uncomment these to ignore model + cache ─────────────
 # models/
 # data/cache/
 
-# ── OPTION B (active): commit model + small cache ─────────────────
+# ── render: commit model + small cache ─────────────────
 # models/xgb_demand_model.pkl  → ~5 MB  — committed ✅
 # models/model_meta.json       → <1 KB  — committed ✅
 # data/cache/eda_stats.npz     → ~1 KB  — committed ✅
