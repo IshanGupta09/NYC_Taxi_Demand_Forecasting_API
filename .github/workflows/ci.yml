@@ -58,39 +58,21 @@ jobs:
   docker-build:
     name: 🐳 Build Docker Image
     runs-on: ubuntu-latest
-    needs: test                   # only build if tests pass
+    needs: test
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ✅ FIXED: No Python dependencies needed
       - name: Create dummy model files for build test
         run: |
           mkdir -p models
-          python -c "
-          import pickle, json, numpy as np
-          import xgboost as xgb
-          # Tiny placeholder model so Docker build succeeds in CI
-          m = xgb.XGBRegressor(n_estimators=1)
-          m.fit([[0]*28], [1])
-          with open('models/xgb_demand_model.pkl', 'wb') as f: pickle.dump(m, f)
-          meta = {'top_zone_ids': [161], 'months': ['2026-01'],
-                  'feature_cols': ['zone_id','hour','day_of_week','day_of_month',
-                                   'month','week_of_year','is_weekend','is_holiday',
-                                   'is_rush_hour','hour_sin','hour_cos','dow_sin',
-                                   'dow_cos','month_sin','month_cos','lag_1h','lag_2h',
-                                   'lag_3h','lag_24h','lag_48h','lag_168h',
-                                   'roll_mean_3h','roll_mean_6h','roll_mean_24h',
-                                   'roll_std_24h','roll_max_24h','avg_fare','avg_distance'],
-                  'test_mae': 0.0, 'test_rmse': 0.0, 'test_r2': 1.0}
-          json.dump(meta, open('models/model_meta.json','w'))
-          "
-        env:
-          PIP_QUIET: 1
+          touch models/xgb_demand_model.pkl
+          echo '{"top_zone_ids":[161]}' > models/model_meta.json
 
       - name: Build Docker image
         run: |
-          pip install xgboost --quiet
           docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
           docker build -t ${{ env.IMAGE_NAME }}:latest .
 
@@ -104,7 +86,7 @@ jobs:
           docker stop api_test
 
   # ────────────────────────────────────────────────────
-  # Job 3: Deploy to Render (on push to main only)
+  # Job 3: Deploy to Render
   # ────────────────────────────────────────────────────
   deploy:
     name: 🚀 Deploy to Render
@@ -116,5 +98,3 @@ jobs:
       - name: Trigger Render deploy hook
         run: |
           curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
-        # Set RENDER_DEPLOY_HOOK_URL in GitHub repo Settings → Secrets
-        # Get the hook URL from Render dashboard → Settings → Deploy Hook
