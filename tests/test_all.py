@@ -4,26 +4,23 @@ tests/test_features.py  +  test_api.py combined
 Run with:  pytest tests/ -v
 """
 
-import json
 import sys
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 import numpy as np
 import pandas as pd
-import pytest
-from pathlib import Path
-from datetime import datetime
+from fastapi.testclient import TestClient
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-
-# ══════════════════════════════════════════════════════════════════
-#  Feature Engineering Tests
-# ══════════════════════════════════════════════════════════════════
+from api.main import app
 from src.features import (
-    add_time_features,
-    add_lag_features,
-    aggregate_hourly,
     FEATURE_COLS,
-    TARGET_COL,
+    add_lag_features,
+    add_time_features,
+    aggregate_hourly,
 )
 
 
@@ -154,7 +151,6 @@ class TestAggregation:
 # ══════════════════════════════════════════════════════════════════
 #  Predict Module Tests (without real model)
 # ══════════════════════════════════════════════════════════════════
-from unittest.mock import MagicMock, patch
 
 
 class TestDemandPredictorLogic:
@@ -163,7 +159,6 @@ class TestDemandPredictorLogic:
     def test_feature_row_shape(self):
         """The feature row should match FEATURE_COLS length."""
         from src.predict import DemandPredictor
-        import pickle, json, tempfile, os
 
         # Create a mock predictor without loading real files
         with patch.object(DemandPredictor, '__init__', lambda self: None):
@@ -201,9 +196,6 @@ class TestDemandPredictorLogic:
 # ══════════════════════════════════════════════════════════════════
 #  FastAPI Endpoint Tests
 # ══════════════════════════════════════════════════════════════════
-from fastapi.testclient import TestClient
-from api.main import app
-
 client = TestClient(app)
 
 

@@ -5,7 +5,6 @@ Convenience wrapper around MLflow for consistent experiment logging
 across training runs and batch inference jobs.
 """
 
-import json
 import os
 from datetime import datetime
 from pathlib import Path

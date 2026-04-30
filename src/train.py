@@ -26,7 +26,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import sys
 sys.path.append(str(Path(__file__).parent.parent))
 from src.features import (
-    build_features, add_lag_features,
+    build_features,
     FEATURE_COLS, TARGET_COL
 )
 
@@ -196,7 +196,7 @@ def train(top_zones: int = 100) -> None:
         elapsed = time.time() - t0
         print(f"\n✅ Done in {elapsed/60:.1f} min | Run ID: {run_id}")
         print(f"   Model → {model_path}")
-        print(f"   View:    mlflow ui  →  http://localhost:5000")
+        print("   View:    mlflow ui  →  http://localhost:5000")
 
 
 # ── CLI ────────────────────────────────────────────────────────────────────────
